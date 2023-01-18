@@ -51,7 +51,8 @@ resource "aws_eip" "nat" {
   }
 }
 
-# NAT Gateway (allow public subnet instances to connec)
+# NAT Gateway (allow private subnet instances to connect to internet)
+# It lives in the public_subnet because only instances in this subnet can use a public IP address
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
   subnet_id = element(aws_subnet.public_subnets.*.id, 0)
@@ -110,6 +111,8 @@ resource "aws_route_table" "public_rt" {
 }
 
 # Associate public subnets to public route table
+# https://serverfault.com/a/854551
+# "a public subnet is a subnet whose associated route table points to the Internet Gateway"
 resource "aws_route_table_association" "public" {
   count = var.public_subnets_count
   subnet_id = element(aws_subnet.public_subnets.*.id, count.index)
