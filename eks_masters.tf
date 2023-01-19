@@ -15,21 +15,37 @@ resource "aws_eks_cluster" "sandbox" {
 
 # Role's trust policy allows EKS to assume it
 resource "aws_iam_role" "cluster_role" {
-  name               = "${var.cluster_name}-eks-role"
-  assume_role_policy = <<-POLICY
-	{
-		"Version": "2012-10-17",
-		"Statement": [
-			{
-				"Effect": "Allow",
-				"Principal": {
-					"Service": "eks.amazonaws.com"
-				},
-				"Action": "sts:AssumeRole"
-			}
-		]
-	}
-  POLICY
+  name = "${var.cluster_name}-eks-role"
+
+  assume_role_policy = data.aws_iam_policy_document.cluster_trust_policy.json
+  # assume_role_policy = <<-POLICY
+  # {
+  # 	"Version": "2012-10-17",
+  # 	"Statement": [
+  # 		{
+  # 			"Effect": "Allow",
+  # 			"Principal": {
+  # 				"Service": "eks.amazonaws.com"
+  # 			},
+  # 			"Action": "sts:AssumeRole"
+  # 		}
+  # 	]
+  # }
+  # POLICY
+}
+
+# The aws_iam_policy_document data source uses HCL to generate a JSON representation of an IAM policy document.
+# This has advantages over including the policy as a json HEREDOC string (commented above).
+data "aws_iam_policy_document" "cluster_trust_policy" {
+  version = "2012-10-17"
+  statement {
+    effect  = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["eks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
 }
 
 # Policies attached to above role
